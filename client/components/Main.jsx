@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import Navbar from './Navbar.jsx';
 import Critters from './Critters.jsx';
+import axios from 'axios';
+
 
 /*
 
@@ -15,15 +17,49 @@ import Critters from './Critters.jsx';
 */
 
 export default class Main extends Component {
+  constructor(props) {
+    super();
+    this.state = {
+      dogs: [],
+      cats: [],
+      dragons: [],
+      selected: ''
+    }
+    this.selectAnimal = this.selectAnimal.bind(this);
+  }
+
+  componentDidMount() {
+    const findDogs = axios.get('/api/dogs');
+    const findCats = axios.get('/api/cats');
+    const findDragons = axios.get('/api/dragons');
+    const logError = console.error.bind(console);
+
+    Promise.all([findDogs, findCats, findDragons])
+      .then(res => res.map(obj => obj.data))
+      .then(([dogs, cats, dragons]) => this.setState({
+        dogs, cats, dragons
+      }))
+      .catch(logError);
+  }
+
+  selectAnimal(animal) {
+    this.setState({selected: animal});
+    console.log(animal)
+  }
 
   render() {
+    const {state} = this;
     return (
       <div>
         <div id="header">
           <h1>Gallery of Cute</h1>
         </div>
-        <Navbar />
-        <Critters />
+        <Navbar selectAnimal={this.selectAnimal}/>
+        {
+          state.selected.length
+          ? <Critters critter={state[state.selected]} />
+          : null
+        }
       </div>
     )
   }
